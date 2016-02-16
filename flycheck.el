@@ -200,6 +200,7 @@ attention to case differences."
     haskell-stack-ghc
     haskell-ghc
     haskell-hlint
+    haskell-liquid
     html-tidy
     jade
     javascript-jshint
@@ -6898,6 +6899,47 @@ See URL `http://www.haskell.org/ghc/'."
     (flycheck-sanitize-errors (flycheck-dedent-error-messages errors)))
   :modes (haskell-mode literate-haskell-mode)
   :next-checkers ((warning . haskell-hlint)))
+
+(flycheck-define-checker haskell-liquid
+  "A Haskell refinement type checker using Liquid Haskell.
+
+See URL `https://github.com/ucsd-progsys/liquidhaskell'."
+  :command
+  ("liquid" source-inplace)
+  ;; ("~/bin/Checker.hs" source-inplace)
+  :error-patterns
+  (
+   (error line-start " " (file-name) ":" line ":" column ":"
+          (message
+       (one-or-more " ") (one-or-more not-newline)
+       (zero-or-more "\n"
+             (one-or-more " ")
+             (zero-or-more not-newline)))
+          line-end)
+
+   (error line-start " " (file-name) ":" line ":" column "-" (one-or-more digit) ":"
+      (message
+       (one-or-more " ") (one-or-more not-newline)
+       (zero-or-more "\n"
+             (one-or-more " ")
+             (zero-or-more not-newline)))
+          line-end)
+
+   (error line-start " " (file-name) ":(" line "," column ")-(" (one-or-more digit) "," (one-or-more digit) "):"
+      (message
+       (one-or-more " ") (one-or-more not-newline)
+       (zero-or-more "\n"
+             (one-or-more " ")
+             (zero-or-more not-newline)))
+          line-end)
+   )
+  :error-filter
+  (lambda (errors)
+    (-> errors
+        flycheck-dedent-error-messages
+        flycheck-sanitize-errors))
+  :modes (haskell-mode literate-haskell-mode)
+  :next-checkers ((warnings-only . haskell-hlint)))
 
 (flycheck-def-config-file-var flycheck-hlintrc haskell-hlint "HLint.hs"
   :safe #'stringp)
